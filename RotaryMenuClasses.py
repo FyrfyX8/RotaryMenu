@@ -1,6 +1,6 @@
 import time
 from abc import ABC
-from RotaryMenu.encoder import Encoder
+from .encoder import Encoder
 from RPLCD.i2c import CharLCD
 import RPi.GPIO as GPIO
 import asyncio
