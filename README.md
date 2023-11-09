@@ -1,2 +1,2 @@
-RotaryMenu
-a python library to display and controll a rotary menu on a LCD Char display
+# RotaryMenu
+A Python library for Raspberry Pi to display and control a rotary menu on a LCD Char display.
