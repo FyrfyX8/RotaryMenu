@@ -3,4 +3,4 @@ include LICENSE
 include requirements.txt
 graft RotaryMenu
 recursive-exclude * *.py[co]
-include /RotaryMenu/docs/*
+include /docs/*
