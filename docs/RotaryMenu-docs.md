@@ -45,4 +45,5 @@ menu_slots = [DynamicSlot("#+#is {rs}#+#", rs=return_setting),
               DynamicSlot("#+#{rii}#+#", rii=return_is_int, rii_args=(1,))]
 ```
 which results in:
+
 ![lcd_2.png](images/lcd_2.png)
