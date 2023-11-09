@@ -1,5 +1,4 @@
 import setuptools
-import versioneer
 
 
 with open("README.md", "r") as fh:
@@ -8,9 +7,8 @@ with open("requirements.txt", "r") as fh:
     requirements = [line.strip() for line in fh]
 
 setuptools.setup(
-    name="RPi-rotary-menu",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    name="RPi.rotary-menu",
+    version="1.0.0",
     author="Fynn Norbisrath",
     author_email="f.norbisrath@web-n-office.de",
     description="A Python library for Raspberry Pi to display and control a rotary menu on a LCD Char display.",
