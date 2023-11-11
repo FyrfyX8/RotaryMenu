@@ -10,7 +10,31 @@ defaultLCD = CharLCD(i2c_expander="PCF8574", address=0x27, port=1, cols=20, rows
 
 
 class DynamicSlot:
-    def __init__(self, slot: str, **kwargs):
+    """
+    A Class to format strings with return functions whenever used in string
+
+    Attributes
+    ----------
+        slot : str
+            A formatted string.
+        function : dict[str, function]
+            A dictionary containing functions with the key set to a value
+            from the formatted string.
+        function_args: dict[str, tuple]
+            A dictionary containing tuples for the function calls, the key
+            is the same as the function key plus an _args at the end.
+    """
+    def __init__(self, slot: str, **kwargs: callable | tuple):
+        """
+        Parameters
+        ----------
+            slot : str
+                A formatted string.
+            **kwargs: callable | tuple
+                A function with the keyword the same as a value in the formatted string,
+                or a tuple with arguments for the function using the same name
+                as the function keyword plus an _args as the keyword.
+        """
         self.slot = slot
         self.function = {}
         self.function_args = {}
@@ -28,44 +52,256 @@ class DynamicSlot:
 
 
 class MenuType(ABC):
-    def __init__(self, slots: list = None, value_callback=None, do_setup_callback=False, after_reset_callback=False,
-                 custom_cursor=False):
+    """
+    Base class with function for all MenuTypes.
+
+    Attributes
+    ----------
+        slots : list[str | DynamicSlot]
+            A list of strings or DynamicSlot's.
+        value_callback : callable
+            A function with parameters (callback_type, value).
+            possible callback_type's and its values:
+                "setup":
+                    "none"
+                "after_setup":
+                    "none"
+                "press":
+                    int based on the slot index.
+                "direction":
+                    "L" or "R" based on the turned direction.
+                "dir_press":
+                    a pathlib.Path containing the Path to the directory.
+                "file_press":
+                    a pathlib.Path containing the Path to the file.
+        do_setup_callback : bool
+            A bool, if True a RotaryMenu class will call the value_callback
+            function with callback_type "setup" before this menu is set.
+        after_reset_callback : bool
+            A bool, if True a RotaryMenu class will call the value_callback
+            function with callback_type "after_setup" after this menu is set.
+        custom_cursor : bool
+            A bool, if True a RotaryMenu class will call the value_callback
+            function with callback_type "direction" when the rotary encoder
+            is turned.
+
+    Methods
+    -------
+        change_slot(self, index: int, slot: str | DynamicSlot)
+            Changes an entry in slots based on an index.
+    """
+    def __init__(self, slots: list[str | DynamicSlot] = None, value_callback: callable = None, do_setup_callback=False,
+                 after_reset_callback=False, custom_cursor=False):
+        """
+        Parameters
+        ----------
+            slots : list[str | DynamicSlot]
+                A list of strings or DynamicSlot's.
+            value_callback : callable
+                A function with parameters (callback_type, value).
+                possible callback_type's and its values:
+                    "setup":
+                        "none"
+                    "after_setup":
+                        "none"
+                    "press":
+                        int based on the slot index.
+                    "direction":
+                        "L" or "R" based on the turned direction.
+            do_setup_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "setup" before this menu is set.
+            after_reset_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "after_setup" after this menu is set.
+            custom_cursor : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "direction" when the rotary encoder
+                is turned.
+        """
         self.slots = slots
         self.value_callback = value_callback
         self.do_setup_callback = do_setup_callback
         self.after_reset_callback = after_reset_callback
         self.custom_cursor = custom_cursor
 
-    def change_slot(self, index: int, slot: str):
+    def change_slot(self, index: int, slot: str | DynamicSlot):
         self.slots[index] = slot
 
 
 class MenuMain(MenuType):
-    def __init__(self, slots: list, value_callback, do_setup_callback=False, after_reset_callback=False,
-                 custom_cursor=False):
+    """
+    A class to be used in a RotaryMenu classes main argument.
+    """
+    def __init__(self, slots: list[str, DynamicSlot], value_callback, do_setup_callback=False,
+                 after_reset_callback=False, custom_cursor=False):
+        """
+        Parameters
+        ----------
+            slots : list[str | DynamicSlot]
+                A list of strings or DynamicSlot's.
+            value_callback : callable
+                A function with parameters (callback_type, value).
+                possible callback_type's and its values:
+                    "setup":
+                        "none"
+                    "after_setup":
+                        "none"
+                    "press":
+                        int based on the slot index.
+                    "direction":
+                        "L" or "R" based on the turned direction.
+            do_setup_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "setup" before this menu is set.
+            after_reset_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "after_setup" after this menu is set.
+            custom_cursor : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "direction" when the rotary encoder
+                is turned.
+        """
         super().__init__(slots=slots, value_callback=value_callback, do_setup_callback=do_setup_callback,
                          after_reset_callback=after_reset_callback, custom_cursor=custom_cursor)
 
 
 class MenuSub(MenuType):
-    def __init__(self, slots: list, value_callback, do_setup_callback=False, after_reset_callback=False,
-                 custom_cursor=False):
+    """
+        A class to be used as a sub menu.
+    """
+    def __init__(self, slots: list[str, DynamicSlot], value_callback, do_setup_callback=False,
+                 after_reset_callback=False, custom_cursor=False):
+        """
+        Parameters
+        ----------
+            slots : list[str | DynamicSlot]
+                A list of strings or DynamicSlot's.
+            value_callback : callable
+                A function with parameters (callback_type, value).
+                possible callback_type's and its values:
+                    "setup":
+                        "none"
+                    "after_setup":
+                        "none"
+                    "press":
+                        int based on the slot index.
+                    "direction":
+                        "L" or "R" based on the turned direction.
+            do_setup_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "setup" before this menu is set.
+            after_reset_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "after_setup" after this menu is set.
+            custom_cursor : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "direction" when the rotary encoder
+                is turned.
+        """
         super().__init__(slots=slots, value_callback=value_callback, do_setup_callback=do_setup_callback,
                          after_reset_callback=after_reset_callback, custom_cursor=custom_cursor)
 
 
 class MenuFile(MenuType):
-    def __init__(self, path: Path, value_callback, *, extension_filter: list = [".py"], show_folders=True,
-                 pr_slots: list = [], dir_affix: str = "#+#", custom_folder_behaviour=False,
+    """
+    A class to display a filesystem in a RotaryMenu class.
+
+    Attributes
+    ----------
+        path : Path
+            A pathlib.Path, containing the default path.
+        current_path : Path
+            A pathlib.Path, containing the current path.
+        extension_filter : list[str]
+            A list containing strings, if the string matches a files extension
+            it will be displayed, if None the list is set to [".py"].
+        file_menu_depth : int
+            A int, if more than 0 the return_to_parent slot is shown.
+        show_folders : bool
+            A bool, if True folders are shown.
+        dir_affix : str
+            A string containing one "#+#", the substring before is converted to the prefix and
+            the substring after as the suffix.
+        file_affix : dict[str, str]
+            A directory containing strings like dir_affix if the key matches
+            a file extension plus _affix the file will get the substrings as pre and suffix.
+        pr_slots : list[str, DynamicSlot]
+            A list containing strings or DynamicSlot's that are shown on top,
+            when pressed they call value_callback with callback_type "press" and
+            the index.
+        fmd0_slots : list[str, DynamicSlot]
+            A list containing strings or DynamicSlot's that are shown after the
+            pr_slots but only if file_menu_depth is 0.
+        pr_slots_last_index : int
+            A int showing the last index of the pr/ and fmd0_slots, changing this
+            could result in errors.
+        custom_folder_behaviour : bool
+            A bool, if True pressing on directory's won't open them instead value_callback
+            with callback_type "dir_press" will be called.
+    Methods
+    -------
+    """
+    def __init__(self, path: Path, value_callback: callable, *, extension_filter: list[str] = None, show_folders=True,
+                 pr_slots: list[str, DynamicSlot] = None, dir_affix: str = "#+#", custom_folder_behaviour=False,
                  do_setup_callback=False,
-                 after_reset_callback=False, custom_cursor=False, **kwargs):
+                 after_reset_callback=False, custom_cursor=False, **kwargs: str):
+        """
+        Parameters
+        ----------
+            path : Path
+                A pathlib.Path.
+            value_callback : callable
+                A function with parameters (callback_type, value).
+                possible callback_type's and its values:
+                    "setup":
+                        "none"
+                    "after_setup":
+                        "none"
+                    "press":
+                        int based on the slot index.
+                    "direction":
+                        "L" or "R" based on the turned direction.
+                    "dir_press":
+                        a pathlib.Path containing the Path to the directory.
+                    "file_press":
+                        a pathlib.Path containing the Path to the file.
+            extension_filter : list[str]
+                A list containing strings, if the string matches a files extension
+                it will be displayed, if None the list is set to [".py"].
+            show_folders : bool
+                A bool, if True folders are shown.
+            pr_slots : list[str, DynamicSlot]
+                A list containing strings or DynamicSlot's that are shown on top,
+                when pressed they call value_callback with callback_type "press" and
+                the index.
+            dir_affix : str
+                A string containing one "#+#", the substring before is converted to the prefix and
+                the substring after as the suffix.
+            custom_folder_behaviour : bool
+                A bool, if True pressing on directory's won't open them instead value_callback
+                with callback_type "dir_press" will be called.
+            do_setup_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "setup" before this menu is set.
+            after_reset_callback : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "after_setup" after this menu is set.
+            custom_cursor : bool
+                A bool, if True a RotaryMenu class will call the value_callback
+                function with callback_type "direction" when the rotary encoder
+                is turned.
+            **kwargs : str
+                Keywords with a file extension plus _affix are used for file_affix, the string
+                has to contain "#+#" as a separator
+        """
         self.path = path
         self.current_path = path
-        self.extension_filter = extension_filter
+        self.extension_filter = extension_filter if extension_filter is not None else [".py"]
         self.file_menu_depth = 0
         self.show_folders = show_folders
-        self.dir_affix = dir_affix.split("#+#", 1)
-        self.file_affix = kwargs
+        self.dir_affix = (dir_affix if dir_affix.count("#+#") == 1 else "#+#").split("#+#", 1)
+        self.file_affix = {k: kwargs[k] for k in kwargs if k.endswith("_affix") and kwargs[k].count("#+#") == 1}
         self.pr_slots = pr_slots
         self.fmd0_slots = []
         self.pr_slots_last_index = len(pr_slots) - 1
@@ -75,7 +311,10 @@ class MenuFile(MenuType):
                          do_setup_callback=do_setup_callback,
                          after_reset_callback=after_reset_callback, custom_cursor=custom_cursor)
 
-    def files_to_slots(self):
+    def files_to_slots(self) -> list[str]:
+        """
+        Returns a list of slots based on the files.
+        """
         file_slots = []
         if self.file_menu_depth > 0:
             file_slots.append(f"{self.dir_affix[0]}#+#..#+#{self.dir_affix[1]}")
@@ -96,27 +335,53 @@ class MenuFile(MenuType):
         return file_slots
 
     def return_to_parent(self):
+        """
+        Returns to the parent directory and decreases file_menu_depth by one.
+        """
         self.file_menu_depth -= 1
         self.set_path(self.current_path.parent)
 
     def set_path(self, path: Path, file_menu_depth: int = None):
+        """
+        Sets the current_path to set path and changes the file_menu_depth if wanted.
+        Parameters
+        ----------
+            path : Path
+                A pathlib.Path to set the current_path to.
+            file_menu_depth : int
+                A int to set the file_menu_depth to. 
+        """
         if file_menu_depth is not None:
             if file_menu_depth < 0:
                 raise ValueError
             else:
                 self.file_menu_depth = file_menu_depth
         self.current_path = path
-        self.slots = self.pr_slots + self.files_to_slots()
+        self.update_slots()
 
     def move_to_dir(self, dir_name: str):
+        """
+        Moves into the given directory.
+        
+        Parameters
+        ----------
+            dir_name : str
+                A string containing the directory name
+        """
         if (self.current_path / dir_name).is_dir():
             self.file_menu_depth += 1
             self.set_path(self.current_path / dir_name)
 
     def return_to_default(self):
+        """
+        Returns to the default path.
+        """
         self.set_path(self.path, 0)
 
-    def update_pr_slots(self):
+    def update_slots(self):
+        """
+        Updates the slots, useful when a pr/ or fmd0_slot has changed
+        """
         if self.file_menu_depth == 0:
             self.slots = self.pr_slots + self.fmd0_slots + self.files_to_slots()
             self.pr_slots_last_index = len(self.pr_slots + self.fmd0_slots) - 1
@@ -126,8 +391,83 @@ class MenuFile(MenuType):
 
 
 class RotaryMenu:
+    """
+    A class to manage a menu on a Char LCD.
+
+    Attributes
+    ----------
+        lcd : CharLCD
+            A RPLCD.CharLCD used to display on the Char LCD.
+        loop :
+            The current running asyncio loop.
+        main
+            The Set MenuMain menu.
+        menu_timeout : int
+            If not 0 and the timer reaches this number the menu is set to main.
+        wait : bool
+            If true actions will be disabled.
+        index : int
+            Is used to determine the current index of the slots.
+        max_index : int
+            The maximal possible index value.
+        shift : int
+            Is used to determine the shift of the display.
+        max_shift : int
+            The maximal shift value.
+        cursor_pos : int
+            The current position of the cursor.
+        max_cursor_pos : int
+            The maximal position of the cursor on the screen.
+        scrolling_start : bool
+            If True the timer before an entry is being scrolled is active.
+        scrolling : bool
+            If True the current entry is being scrolled.
+        end_scrolling : bool
+            If True the scrolling ends at the next loop.
+        scrolling_end : bool
+            If True the scrolling of an entry has ended and waits for end_scrolling.
+        backed_slots : list[str]
+            A list of strings, the formatted version of the slots.
+
+    Methods
+    -------
+        return_max_index()
+            Returns the max_index.
+        return_max_shift()
+            Returns the max_shift.
+        return_max_cursor_pos()
+            Returns the max_cursor_pos.
+        if_overflow(index)
+            Returns True if the current entry is longer than the amount of columns.
+        set(menu)
+            Sets the current menu to the given menu.
+        reset_cursor()
+            Resets the cursor to position 0
+        update_current_slot()
+            Updates the current slot.
+        menu()
+            Write the current visible slots to the Char LCD.
+        reset_menu()
+            Resets the current Menu.
+    """
     def __init__(self, lcd: CharLCD = defaultLCD, *, left_pin: int, right_pin: int, button_pin: int, main: MenuMain,
                  menu_timeout: int = 0):
+        """
+        Parameters
+        ----------
+            lcd : CharLCD
+                A RPLCD.CharLCD to write the menu to.
+            left_pin : int
+                The BCM pins number for the left rotation.
+            right_pin : int
+                The BCM pins number for the right rotation.
+            button_pin : int
+                The BCM pins number for button presses.
+            main : MenuMain
+                The main menu of the RotaryMenu.
+            menu_timeout : int
+                If not 0 and the timer reaches this number the menu is set to main.
+        """
 
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -142,11 +482,11 @@ class RotaryMenu:
         self.current_menu = self.main
         self.wait = False
         self.index = 0
-        self.max_index = self.get_max_index()
+        self.max_index = self.return_max_index()
         self.shift = 0
-        self.max_shift = self.get_max_shift()
+        self.max_shift = self.return_max_shift()
         self.cursor_pos = 0
-        self.max_cursor_pos = self.get_max_cursor_pos()
+        self.max_cursor_pos = self.return_max_cursor_pos()
         self.scrolling_start = True
         self.scrolling = False
         self.end_scrolling = False
@@ -155,10 +495,17 @@ class RotaryMenu:
         self.get_backed_slots()
         asyncio.run_coroutine_threadsafe(self.__timeout_timer(), self.loop)
 
-    def get_max_index(self):
+    def return_max_index(self):
+        """
+        Returns the max_index based on the amount of slots.
+        """
         return len(self.current_menu.slots) - 1
 
-    def get_max_shift(self):
+    def return_max_shift(self):
+        """
+        Returns the max_shift based on the amount of slots and
+        the amount of rows of the display.
+        """
         max_shift = len(self.current_menu.slots) - self.lcd.lcd.rows
 
         if max_shift >= 0:
@@ -166,16 +513,22 @@ class RotaryMenu:
         else:
             return 0
 
-    def get_max_cursor_pos(self):
+    def return_max_cursor_pos(self):
+        """
+        Returns the max_cursor_pos based on the amount of rows of the display.
+        """
         return self.lcd.lcd.rows
 
     def get_backed_slots(self):
+        """
+        Sets the backed_slots to the formatted version of the current slots
+        """
         backed_slots = []
         index = 0
         for i in self.current_menu.slots:
             slot = str(self.current_menu.slots[index]).split("#+#", 2)
             space = self.lcd.lcd.cols - len(slot[0]) - len(slot[2]) - 1
-            if self.get_overflow(index):
+            if self.if_overflow(index):
                 backed_name = slot[1][0:space]
             else:
                 backed_name = slot[1] + " " * (space - len(slot[1]))
@@ -199,7 +552,15 @@ class RotaryMenu:
                 if self.current_menu != self.main and not self.wait:
                     clock += 1
 
-    def get_overflow(self, index):
+    def if_overflow(self, index: int):
+        """
+        Returns True if the selected slot exceeds the amount of columns.
+
+        Parameters
+        ----------
+            index : int
+                the index of the slot to check.
+        """
         slot = str(self.current_menu.slots[index]).split("#+#", 2)
         len_prefix = len(slot[0])
         len_name = len(slot[1])
@@ -213,6 +574,14 @@ class RotaryMenu:
         self.wait = True
 
     def set(self, menu: MenuType):
+        """
+        Sets the current_menu to given menu
+
+        Parameters
+        ----------
+            menu : MenuType
+                The menu to set to.
+        """
         self.current_menu = menu
         if self.current_menu.do_setup_callback:
             self.__callback("setup", value="none")
@@ -225,7 +594,7 @@ class RotaryMenu:
 
     async def __start_scrolling(self):
 
-        if self.get_overflow(self.index) and not self.current_menu.custom_cursor:
+        if self.if_overflow(self.index) and not self.current_menu.custom_cursor:
             self.scrolling_start = True
             shift = 0
             for t in range(1000):
@@ -269,7 +638,16 @@ class RotaryMenu:
             self.lcd.cursor_pos = (row, 1)
             self.lcd.write_string(self.backed_slots[index])
 
-    def __cursor(self, pr_cursor_pos):
+    def cursor(self, pr_cursor_pos: int):
+        """
+        Deletes the old curser at the old position and writes one at
+        the current position.
+
+        Parameters
+        ----------
+            pr_cursor_pos : int
+                The position where to delete the cursor.
+        """
         if not self.current_menu.custom_cursor:
             self.lcd.cursor_pos = (pr_cursor_pos, 0)
             self.lcd.write_string(" ")
@@ -277,11 +655,17 @@ class RotaryMenu:
             self.lcd.write_string(">")
 
     def reset_cursor(self):
+        """
+        Resets the cursor to position 0.
+        """
         pr_cursor_pos = self.cursor_pos
         self.cursor_pos = 0
-        self.__cursor(pr_cursor_pos)
+        self.cursor(pr_cursor_pos)
 
     def update_current_slot(self):
+        """
+        Updates the slot at cursor position.
+        """
         if self.scrolling or self.scrolling_start:
             self.end_scrolling = True
             while self.scrolling:
@@ -293,6 +677,9 @@ class RotaryMenu:
         self.lcd.write_string(self.backed_slots[self.index])
 
     def menu(self):
+        """
+        Writes the four current visible slots to the display.
+        """
         current_index = self.shift
         current_row = 0
         self.get_backed_slots()
@@ -306,15 +693,23 @@ class RotaryMenu:
                 pass
 
     def reset_menu(self, reset_wait=True):
+        """
+        Resets the Menu and the wait bool if wanted.
+
+        Parameters
+        ----------
+            reset_wait : bool
+                If True wait is set to false.
+        """
         self.lcd.clear()
         time.sleep(0.01)
         if isinstance(self.current_menu, MenuFile):
-            self.current_menu.update_pr_slots()
+            self.current_menu.update_slots()
         self.index = 0
         self.shift = 0
-        self.max_cursor_pos = self.get_max_cursor_pos()
-        self.max_index = self.get_max_index()
-        self.max_shift = self.get_max_shift()
+        self.max_cursor_pos = self.return_max_cursor_pos()
+        self.max_index = self.return_max_index()
+        self.max_shift = self.return_max_shift()
         if self.scrolling or self.scrolling_start:
             self.end_scrolling = True
             while self.scrolling:
@@ -358,10 +753,10 @@ class RotaryMenu:
                 if self.scrolling or self.scrolling_start:
                     self.__stop_scrolling(pr_cursor_pos, pr_index)
                 if self.cursor_pos != pr_cursor_pos:
-                    self.__cursor(pr_cursor_pos)
+                    self.cursor(pr_cursor_pos)
                 if self.shift != pr_shift:
                     self.menu()
-                if self.get_overflow(self.index):
+                if self.if_overflow(self.index):
                     asyncio.run_coroutine_threadsafe(self.__start_scrolling(), self.loop)
                 self.__reset_wait()
 

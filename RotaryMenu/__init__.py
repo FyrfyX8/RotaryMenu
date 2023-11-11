@@ -1,1 +1,1 @@
-from RotaryMenu import *
+from RotaryMenu.RotaryMenuClasses import *

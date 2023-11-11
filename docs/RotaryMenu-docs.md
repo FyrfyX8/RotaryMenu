@@ -25,7 +25,7 @@ which results a 4x20 Display to display:
 ## DynamicSlots
 
 DynamicSlots are Slots that update themselves based on return 
-functions. They contain a string with  format pretences:
+functions. They contain a string with  format brackets:
 
 ```python
 from RotaryMenu.RotaryMenuClasses import *
