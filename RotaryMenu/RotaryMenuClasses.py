@@ -133,7 +133,7 @@ class MenuMain(MenuType):
     """
     A class to be used in a RotaryMenu classes main argument.
     """
-    def __init__(self, slots: list[str, DynamicSlot], value_callback, do_setup_callback=False,
+    def __init__(self, slots: list[str, DynamicSlot], value_callback: callable, do_setup_callback=False,
                  after_reset_callback=False, custom_cursor=False):
         """
         Parameters
@@ -170,7 +170,7 @@ class MenuSub(MenuType):
     """
         A class to be used as a sub menu.
     """
-    def __init__(self, slots: list[str, DynamicSlot], value_callback, do_setup_callback=False,
+    def __init__(self, slots: list[str, DynamicSlot], value_callback: callable, do_setup_callback=False,
                  after_reset_callback=False, custom_cursor=False):
         """
         Parameters
@@ -441,6 +441,8 @@ class RotaryMenu:
             Returns True if the current entry is longer than the amount of columns.
         set(menu)
             Sets the current menu to the given menu.
+        cursor(pr_cursor_pos)
+            Deletes old cursor and writes new one
         reset_cursor()
             Resets the cursor to position 0
         update_current_slot()
