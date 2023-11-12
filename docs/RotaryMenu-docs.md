@@ -351,6 +351,7 @@ print(rotary_menu.backed_slots)
 | **argument** | **description**    | **default value** |
 |--------------|--------------------|-------------------|
 | index        | the index to check |                   |
+
 To check if a slot extends over the colum limit is possible with this method, it returns ether `True` or `False`.
 ````python
 print(rotary_menu.if_overflow(2))
@@ -360,6 +361,7 @@ print(rotary_menu.if_overflow(2))
 | **argument** | **description**    | **default value**        |
 |--------------|--------------------|--------------------------|
 | menu         | the menu to set to | this instances main menu |
+
 Using [set()](#set) without arguments results the current_menu attribute to be set to the instances main attribute.
 if you use a MenuType subclass the current_menu will be set to given menu.
 ````python

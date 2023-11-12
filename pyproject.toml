@@ -1,14 +1,14 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "RPLCD==1.3.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "RPi.rotary-menu"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="FyrfyX8", email="f.norbisrath@web-n-office.de" },
 ]
-description = "A Python library for Raspberry Pi to display and control a rotary menu on a LCD Char display."
+description = "A Python library for Raspberry Pi to display and control a rotary menu on a CharLCD."
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
