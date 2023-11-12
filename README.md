@@ -17,6 +17,6 @@ you also need to install RPi.GPIO on your Raspberry Pi
 
 # Documentation
 
-[Click here!](docs/RotaryMenu-docs.md)
+[Click here!](https://github.com/FyrfyX8/RotaryMenu/blob/main/docs/RotaryMenu-docs.md)
 
 
