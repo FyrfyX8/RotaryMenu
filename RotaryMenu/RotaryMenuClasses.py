@@ -5,6 +5,7 @@ from RPLCD.i2c import CharLCD
 import RPi.GPIO as GPIO
 import asyncio
 from pathlib import Path
+from collections.abc import Callable
 
 defaultLCD = CharLCD(i2c_expander="PCF8574", address=0x27, port=1, cols=20, rows=4, dotsize=8)
 
@@ -24,13 +25,13 @@ class DynamicSlot:
             A dictionary containing tuples for the function calls, the key
             is the same as the function key plus an _args at the end.
     """
-    def __init__(self, slot: str, **kwargs: callable | tuple):
+    def __init__(self, slot: str, **kwargs: Callable[..., ...] | tuple):
         """
         Parameters
         ----------
             slot : str
                 A formatted string.
-            **kwargs: callable | tuple
+            **kwargs: Callable[..., ...] | tuple
                 A function with the keyword the same as a value in the formatted string,
                 or a tuple with arguments for the function using the same name
                 as the function keyword plus an _args as the keyword.
@@ -87,7 +88,7 @@ class MenuType(ABC):
 
     Methods
     -------
-        change_slot(self, index: int, slot: str | DynamicSlot)
+        change_slot(index: int, slot: str | DynamicSlot)
             Changes an entry in slots based on an index.
     """
     def __init__(self, slots: list[str | DynamicSlot] = None, value_callback: callable = None, do_setup_callback=False,
@@ -241,11 +242,23 @@ class MenuFile(MenuType):
             with callback_type "dir_press" will be called.
     Methods
     -------
+        files_to_slots() -> list[str]
+            Returns a list of slots based on the files.
+        return_to_parent()
+            Returns to the parent directory and decreases file_menu_depth by one.
+        set_path(path: Path, file_menu_depth: int = None)
+            Sets the current_path to set path and changes the file_menu_depth if wanted.
+        move_to_dir(dir_name: str)
+            Moves into the given directory and increases the file_menu_depth by one.
+        return_to_default()
+            Returns to the default path.
+        update_slots()
+            updates the slots list.
     """
-    def __init__(self, path: Path, value_callback: callable, *, extension_filter: list[str] = None, show_folders=True,
-                 pr_slots: list[str, DynamicSlot] = None, dir_affix: str = "#+#", custom_folder_behaviour=False,
-                 do_setup_callback=False,
-                 after_reset_callback=False, custom_cursor=False, **kwargs: str):
+    def __init__(self, path: Path, value_callback: callable, *, extension_filter: list[str] = None,
+                 show_folders=True, pr_slots: list[str, DynamicSlot] = None, dir_affix: str = "#+#",
+                 custom_folder_behaviour=False, do_setup_callback=False, after_reset_callback=False,
+                 custom_cursor=False, **kwargs: str):
         """
         Parameters
         ----------
@@ -293,7 +306,7 @@ class MenuFile(MenuType):
                 is turned.
             **kwargs : str
                 Keywords with a file extension plus _affix are used for file_affix, the string
-                has to contain "#+#" as a separator
+                has to contain "#+#" as a separator.
         """
         self.path = path
         self.current_path = path
@@ -361,7 +374,7 @@ class MenuFile(MenuType):
 
     def move_to_dir(self, dir_name: str):
         """
-        Moves into the given directory.
+        Moves into the given directory and increases the file_menu_depth by one.
         
         Parameters
         ----------
@@ -380,7 +393,7 @@ class MenuFile(MenuType):
 
     def update_slots(self):
         """
-        Updates the slots, useful when a pr/ or fmd0_slot has changed
+        Updates the slots list.
         """
         if self.file_menu_depth == 0:
             self.slots = self.pr_slots + self.fmd0_slots + self.files_to_slots()
@@ -404,8 +417,10 @@ class RotaryMenu:
             The Set MenuMain menu.
         menu_timeout : int
             If not 0 and the timer reaches this number the menu is set to main.
+        timeout_reset : bool
+            If True gets set to False after counter was set to 0
         wait : bool
-            If true actions will be disabled.
+            If True actions will be disabled.
         index : int
             Is used to determine the current index of the slots.
         max_index : int
@@ -575,7 +590,7 @@ class RotaryMenu:
     def __set_wait(self):
         self.wait = True
 
-    def set(self, menu: MenuType):
+    def set(self, menu: MenuType = None, /):
         """
         Sets the current_menu to given menu
 
@@ -584,7 +599,7 @@ class RotaryMenu:
             menu : MenuType
                 The menu to set to.
         """
-        self.current_menu = menu
+        self.current_menu = menu if menu is not None else self.main
         if self.current_menu.do_setup_callback:
             self.__callback("setup", value="none")
         self.reset_menu(reset_wait=False)
@@ -592,7 +607,7 @@ class RotaryMenu:
             self.__callback("after_setup", value="none")
 
     def __callback(self, callback_type: str, value=None):
-        self.current_menu.value_callback(callback_type, value)
+        self.current_menu.value_callback(callback_type, value, self)
 
     async def __start_scrolling(self):
 
@@ -661,6 +676,7 @@ class RotaryMenu:
         Resets the cursor to position 0.
         """
         pr_cursor_pos = self.cursor_pos
+        self.index = self.index - self.cursor_pos
         self.cursor_pos = 0
         self.cursor(pr_cursor_pos)
 
@@ -707,8 +723,6 @@ class RotaryMenu:
         time.sleep(0.01)
         if isinstance(self.current_menu, MenuFile):
             self.current_menu.update_slots()
-        self.index = 0
-        self.shift = 0
         self.max_cursor_pos = self.return_max_cursor_pos()
         self.max_index = self.return_max_index()
         self.max_shift = self.return_max_shift()
@@ -721,6 +735,8 @@ class RotaryMenu:
                 time.sleep(0.01)
             self.end_scrolling = False
         self.reset_cursor()
+        self.index = 0
+        self.shift = 0
         self.menu()
         if reset_wait:
             self.__reset_wait()

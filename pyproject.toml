@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "RPi.rotary-menu"
+version = "0.0.1"
+authors = [
+  { name="FyrfyX8", email="f.norbisrath@web-n-office.de" },
+]
+description = "A Python library for Raspberry Pi to display and control a rotary menu on a LCD Char display."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Other OS",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/FyrfyX8/RotaryMenu"
+"Bug Tracker" = "https://github.com/FyrfyX8/RotaryMenu/issues"
