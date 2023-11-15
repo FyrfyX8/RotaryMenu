@@ -693,6 +693,8 @@ class RotaryMenu:
         self.get_backed_slots()
         self.lcd.cursor_pos = (self.cursor_pos, 1)
         self.lcd.write_string(self.backed_slots[self.index])
+        if self.if_overflow(self.index):
+            asyncio.run_coroutine_threadsafe(self.__start_scrolling(), self.loop)
 
     def menu(self):
         """
