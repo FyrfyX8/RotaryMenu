@@ -543,7 +543,7 @@ class RotaryMenu:
         backed_slots = []
         index = 0
         for i in self.current_menu.slots:
-            slot = str(self.current_menu.slots[index]).split("#+#", 2)
+            slot = str(self.current_menu.slots[index]).split("#+#")
             space = self.lcd.lcd.cols - len(slot[0]) - len(slot[2]) - 1
             if self.if_overflow(index):
                 backed_name = slot[1][0:space]
@@ -578,7 +578,7 @@ class RotaryMenu:
             index : int
                 the index of the slot to check.
         """
-        slot = str(self.current_menu.slots[index]).split("#+#", 2)
+        slot = str(self.current_menu.slots[index]).split("#+#")
         len_prefix = len(slot[0])
         len_name = len(slot[1])
         len_suffix = len(slot[2])
@@ -621,7 +621,7 @@ class RotaryMenu:
                     return
             self.scrolling_start = False
             self.scrolling = True
-            slot = str(self.current_menu.slots[self.index]).split("#+#", 2)
+            slot = str(self.current_menu.slots[self.index]).split("#+#")
             space = self.lcd.lcd.cols - len(slot[0]) - len(slot[2]) - 1
             for i in range(len(slot[1]) - space + 1):
                 if self.end_scrolling:
@@ -790,10 +790,10 @@ class RotaryMenu:
                     self.reset_menu()
                 else:
                     slot: str = self.current_menu.slots[self.index]
-                    check_path = self.current_menu.current_path / slot.split("#+#", 2)[1]
+                    check_path = self.current_menu.current_path / slot.split("#+#")[1]
                     if check_path.is_dir():
                         if not self.current_menu.custom_folder_behaviour:
-                            self.current_menu.move_to_dir(slot.split("#+#", 2)[1])
+                            self.current_menu.move_to_dir(slot.split("#+#")[1])
                             self.reset_menu()
                         else:
                             self.__callback("dir_press", value=check_path)
