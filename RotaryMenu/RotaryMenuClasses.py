@@ -688,8 +688,10 @@ class RotaryMenu:
             self.end_scrolling = True
             while self.scrolling:
                 if self.scrolling_end:
-                    self.scrolling_end = False
+                    self.scrolling_start = False
                     self.scrolling = False
+                    self.scrolling_end = False
+                    self.end_scrolling = False
         self.get_backed_slots()
         self.lcd.cursor_pos = (self.cursor_pos, 1)
         self.lcd.write_string(self.backed_slots[self.index])
