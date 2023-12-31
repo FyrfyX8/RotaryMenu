@@ -25,6 +25,7 @@ class DynamicSlot:
             A dictionary containing tuples for the function calls, the key
             is the same as the function key plus an _args at the end.
     """
+
     def __init__(self, slot: str, **kwargs: Callable[..., ...] | tuple):
         """
         Parameters
@@ -91,6 +92,7 @@ class MenuType(ABC):
         change_slot(index: int, slot: str | DynamicSlot)
             Changes an entry in slots based on an index.
     """
+
     def __init__(self, slots: list[str | DynamicSlot] = None, value_callback: callable = None, do_setup_callback=False,
                  after_reset_callback=False, custom_cursor=False):
         """
@@ -134,6 +136,7 @@ class MenuMain(MenuType):
     """
     A class to be used in a RotaryMenu classes main argument.
     """
+
     def __init__(self, slots: list[str, DynamicSlot], value_callback: callable, do_setup_callback=False,
                  after_reset_callback=False, custom_cursor=False):
         """
@@ -171,6 +174,7 @@ class MenuSub(MenuType):
     """
         A class to be used as a sub menu.
     """
+
     def __init__(self, slots: list[str, DynamicSlot], value_callback: callable, do_setup_callback=False,
                  after_reset_callback=False, custom_cursor=False):
         """
@@ -255,6 +259,7 @@ class MenuFile(MenuType):
         update_slots()
             updates the slots list.
     """
+
     def __init__(self, path: Path, value_callback: callable, *, extension_filter: list[str] = None,
                  show_folders=True, pr_slots: list[str, DynamicSlot] = None, dir_affix: str = "#+#",
                  custom_folder_behaviour=False, do_setup_callback=False, after_reset_callback=False,
@@ -375,7 +380,7 @@ class MenuFile(MenuType):
     def move_to_dir(self, dir_name: str):
         """
         Moves into the given directory and increases the file_menu_depth by one.
-        
+
         Parameters
         ----------
             dir_name : str
@@ -462,11 +467,12 @@ class RotaryMenu:
             Resets the cursor to position 0
         update_current_slot()
             Updates the current slot.
-        menu()
+        menu(keep_scrolled)
             Write the current visible slots to the Char LCD.
         reset_menu()
             Resets the current Menu.
     """
+
     def __init__(self, lcd: CharLCD = defaultLCD, *, left_pin: int, right_pin: int, button_pin: int, main: MenuMain,
                  menu_timeout: int = 0):
         """
@@ -510,6 +516,9 @@ class RotaryMenu:
         self.scrolling_end = False
         self.backed_slots = []
         self.get_backed_slots()
+        self.__shift_slot = ""
+        self.__shift_str = ""
+        self.__shift_backed = ""
         asyncio.run_coroutine_threadsafe(self.__timeout_timer(), self.loop)
 
     def return_max_index(self):
@@ -536,9 +545,14 @@ class RotaryMenu:
         """
         return self.lcd.lcd.rows
 
-    def get_backed_slots(self):
+    def get_backed_slots(self, save_scrolled=False, /):
         """
         Sets the backed_slots to the formatted version of the current slots
+
+        Parameters
+        ----------
+            save_scrolled : bool
+                If True a backed version of the shifted Slot gets saved.
         """
         backed_slots = []
         index = 0
@@ -549,6 +563,11 @@ class RotaryMenu:
                 backed_name = slot[1][0:space]
             else:
                 backed_name = slot[1] + " " * (space - len(slot[1]))
+            if save_scrolled and self.scrolling:
+                temp = self.__shift_slot.split("#+#")
+                if slot[1] == temp[1]:
+                    if len(slot[0]) == len(temp[0]) and len(slot[2]) == len(temp[2]):
+                        self.__shift_backed = self.__shift_str
             backed_slots.append(f"{slot[0]}{backed_name}{slot[2]}")
             index += 1
         self.backed_slots = backed_slots
@@ -621,15 +640,21 @@ class RotaryMenu:
                     return
             self.scrolling_start = False
             self.scrolling = True
+            self.__shift_slot = self.current_menu.slots[self.index]
             slot = str(self.current_menu.slots[self.index]).split("#+#")
             space = self.lcd.lcd.cols - len(slot[0]) - len(slot[2]) - 1
             for i in range(len(slot[1]) - space + 1):
+                while self.wait:
+                    await asyncio.sleep(0.01)
                 if self.end_scrolling:
                     self.scrolling = False
                     return
+                self.wait = True
                 self.lcd.cursor_pos = (self.cursor_pos, 1)
                 shift_name = slot[1][shift:shift + space]
                 self.lcd.write_string(f"{slot[0]}{shift_name}{slot[2]}")
+                self.__shift_str = shift_name
+                self.wait = False
                 shift += 1
                 for t in range(25):
                     if not self.end_scrolling:
@@ -698,17 +723,26 @@ class RotaryMenu:
         if self.if_overflow(self.index):
             asyncio.run_coroutine_threadsafe(self.__start_scrolling(), self.loop)
 
-    def menu(self):
+    def menu(self, keep_scrolled=False, /):
         """
         Writes the four current visible slots to the display.
+
+        Parameters
+        ----------
+            keep_scrolled : bool
+                If True the middle substring of a shifted slot won't rest
+                if the substring is the same as before and the slot
+                doesn't change in size.
         """
         current_index = self.shift
         current_row = 0
-        self.get_backed_slots()
+        self.get_backed_slots(keep_scrolled)
         for t in range(self.lcd.lcd.rows):
             try:
                 self.lcd.cursor_pos = (current_row, 1)
-                self.lcd.write_string(self.backed_slots[current_index])
+                self.lcd.write_string(self.backed_slots[current_index] if not (current_index == self.index
+                                                                               and self.scrolling and keep_scrolled)
+                                      else self.__shift_backed)
                 current_row += 1
                 current_index += 1
             except IndexError:

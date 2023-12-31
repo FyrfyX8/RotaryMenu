@@ -391,9 +391,12 @@ was reset.
 After you changed a Slot with [change_slot()](#changeslot) you need to run this method to apply the changes to the display.
 It always changes the slot the cursor is on.
 
-## menu()
+## menu(keep_scroll)
 
 In case you changed more than one slot you can also use this function to update all visible at once.
+
+if keep_scroll is True the scrolled Slot keep its shift when the middle substring doesn't change and the two other 
+substrings don't change in length
 
 
 ## reset_menu()
