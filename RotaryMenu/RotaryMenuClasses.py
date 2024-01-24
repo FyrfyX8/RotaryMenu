@@ -618,12 +618,20 @@ class RotaryMenu:
             menu : MenuType
                 The menu to set to.
         """
+        while True:
+            if not self.wait:
+                break
+            else:
+                time.sleep(0.01)
+
+        self.wait = True
         self.current_menu = menu if menu is not None else self.main
         if self.current_menu.do_setup_callback:
             self.__callback("setup", value="none")
         self.reset_menu(reset_wait=False)
         if self.current_menu.after_reset_callback:
             self.__callback("after_setup", value="none")
+        self.wait = False
 
     def __callback(self, callback_type: str, value=None):
         self.current_menu.value_callback(callback_type, value, self)
