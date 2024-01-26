@@ -618,12 +618,6 @@ class RotaryMenu:
             menu : MenuType
                 The menu to set to.
         """
-        while True:
-            if not self.wait:
-                break
-            else:
-                time.sleep(0.01)
-
         self.wait = True
         self.current_menu = menu if menu is not None else self.main
         if self.current_menu.do_setup_callback:
