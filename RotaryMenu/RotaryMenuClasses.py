@@ -457,6 +457,8 @@ class RotaryMenu:
             Returns the max_shift.
         return_max_cursor_pos()
             Returns the max_cursor_pos.
+        swap_encoder_input()
+            Swaps the encoders directional input
         if_overflow(index)
             Returns True if the current entry is longer than the amount of columns.
         set(menu)
@@ -495,7 +497,8 @@ class RotaryMenu:
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(button_pin, GPIO.RISING, callback=self.__button_press, bouncetime=300)
-        encoder = Encoder(left_pin, right_pin, self.__value_changed)
+        self.encoder = Encoder(left_pin, right_pin, self.__value_changed)
+        self.encoder_pins = (left_pin, right_pin)
 
         self.lcd = lcd
         self.loop = asyncio.get_event_loop()
@@ -571,6 +574,20 @@ class RotaryMenu:
             backed_slots.append(f"{slot[0]}{backed_name}{slot[2]}")
             index += 1
         self.backed_slots = backed_slots
+
+    def swap_encoder_input(self, reversed = False):
+        """
+        Flips the directional inputs of the encoder
+
+        Parameters
+        ----------
+             reversed : bool
+                If True the encoders input is flipped.
+        """
+        if reversed:
+            self.encoder.rightPin, self.encoder.leftPin = self.encoder_pins
+        else
+            self.encoder.leftPin, self.encoder.rightPin = self.encoder_pins
 
     async def __timeout_timer(self):
         clock = 0
