@@ -586,7 +586,7 @@ class RotaryMenu:
         """
         if reversed:
             self.encoder.rightPin, self.encoder.leftPin = self.encoder_pins
-        else
+        else:
             self.encoder.leftPin, self.encoder.rightPin = self.encoder_pins
 
     async def __timeout_timer(self):
